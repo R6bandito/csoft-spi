@@ -1,3 +1,11 @@
+/**
+ * @file    Cus_Spi_port.h
+ * @brief   SPI bus management layer
+ * @license MIT
+ * @copyright Copyright (c) 2026 [R6bandito]
+*/
+
+
 #ifndef __CUS_SPI_PORT_H__
 #define __CUS_SPI_PORT_H__
 
@@ -15,7 +23,6 @@
 
 
 /* ****** Delay Mapping Conf ****** */
-  /* 请于此处重映射你的延时方法. 以保证通信层时序正确. */
   #define Cus_SPI_Delay_us(us)                   Cus_delay_us(us)
   #define Cus_SPI_Delay_ms(ms)                   Cus_delay_ms(ms)
 /* ****** Delay Mapping Conf ****** */
@@ -38,8 +45,15 @@
 /* 请务必根据自身运行环境重写以下方法. 以便通信层能够正确操作底层硬件. */
 __weak uint8_t Cus_GPIO_Read_MISO( void );
 __weak void Cus_GPIO_Write_MOSI( uint8_t level );
-__weak void Cus_GPIO_Write_CS( uint8_t devId, uint8_t level );
+__weak void Cus_GPIO_Write_CS( uint16_t devId, uint8_t level );
 __weak void Cus_GPIO_Write_CLK( uint8_t level );
+/* *************************************************** */
+
+
+/* *************************************************** */
+/* 请务必根据自身运行环境重写以下方法. 以保证通信层时序正确. */
+__weak void Cus_delay_us( uint32_t us );
+__weak void Cus_delay_ms( uint32_t ms );
 /* *************************************************** */
 
 
