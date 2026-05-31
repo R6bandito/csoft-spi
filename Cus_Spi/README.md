@@ -231,6 +231,108 @@ Cus_SPI/
 
 ------
 
+## 📊时序验证
+
+注：以下波形测试环境 均在 72Mhz主频 + DWT微秒延时 + HAL库的环境下进行。
+
+- 只发送单个字节0x55。MSB自序/Mode0。
+
+  ```c
+  Cus_SPI_SendByte(DevA.spiBus, &DevA, 0x55);
+  ```
+
+  ![SPI波形-50Khz/Mode0/MSB](image/soft_spi_sendNoRecv_0x55_MSB_Mode_0.png)
+
+  空闲低电平，第一个边沿采样，CLK频率 50Khz（图中未标出）。`SPI_DELAY_US = 5`。
+
+- 发送并接收一个字节。发送0x5A。MSB自序/Mode0。
+
+  ```c
+      uint8_t tx = 0x5A;
+      uint8_t rx2 = 0;
+      rx2 = Cus_SPI_TransferByte(DevA.spiBus, &DevA, tx);
+      printf("rx2: %X", rx2);
+  ```
+
+  ![SPI波形-50Khz/Mode0/MSB](image/soft spi Transfer 0x5A MSB Mode 0.png)
+
+  由于为模拟测试，因此MISO保持高电平，rx2读取到0xFF。CLK频率50Khz。
+
+- 发送一个字节块(不接收)。
+
+  ```c
+     uint8_t tx_block[] = {0x12, 0x34, 0x56, 0x78};
+     Cus_SPI_TransferBlock(DevA.spiBus, &DevA, tx_block, NULL, 4); // 只发送
+  ```
+
+  ![SPI波形-50Khz/Mode0/MSB](image/soft spi Transferblockonlysend 0x12 34 56 78 MSB Mode 0.png)
+
+- 只接收字节块（发送0xFF）。
+
+  ```c
+      uint8_t rx_block[4] = 0;
+      Cus_SPI_TransferBlock(&myBus, &DevA, NULL, rx_block, 4);
+      for( uint8_t i = 0; i < 4; i++ )
+      {
+        printf("rx_block[%d]=%X\t", i, rx_block[i]);
+      }
+  ```
+
+  ![SPI波形-50Khz/Mode0/MSB](image/soft spi Transferonlyrecv MSB Mode 0.png)
+
+  由于MISO测试时保持高电平。因此读出均为FF，MOSI发送也均为FF。
+
+- LSB自序发送0x55。
+
+  ```c
+     DevA.is_MSBFirst = false;  // 改为 LSB first
+     Cus_SPI_SendByte(&myBus, &DevA, 0x55); // 预期 MOSI 输出 10101010 (LSB)
+  ```
+
+  ![SPI波形-50Khz/Mode0/LSB](image/soft spi sendNoRecv 0x55 LSB Mode 0.png)
+
+- MSB字序发送0x55。发送模式Mode1。
+
+  ```c
+      DevA.devMode = CUS_SPI_MODE_1;
+      DevA.is_MSBFirst = true;
+      Cus_SPI_SendByte(DevA.spiBus, &DevA, 0x55);
+  ```
+
+  ![SPI波形-50Khz/Mode1/MSB](image/soft spi sendNoRecv 0x55 MSB Mode 1.png)
+
+  总线低电平，第二个边沿采样。
+
+- MSB字序发送0x55。发送模式Mode2。
+
+  ```c
+      DevA.devMode = CUS_SPI_MODE_2;
+      Cus_SPI_SendByte(DevA.spiBus, &DevA, 0x55); // 空闲高，下降沿采样
+  ```
+
+  ![SPI波形-50Khz/Mode2/MSB](image/soft spi sendNoRecv 0x55 MSB Mode 2.png)
+
+  总线高电平，第一个边沿采样。
+
+- MSB字序发送0x55。发送模式Mode3。
+
+  ```c
+      DevA.devMode = CUS_SPI_MODE_3;
+      Cus_SPI_SendByte(DevA.spiBus, &DevA, 0x55); // 空闲高，上升沿采样
+  ```
+
+  ![SPI波形-50Khz/Mode3/MSB](image/soft spi sendNoRecv 0x55 MSB Mode 3.png)
+
+  总线高电平，第二个边沿采样。
+
+- 频率上限。当`SPI_DELAY_US = 1`。
+
+  ![SPI波形-125Khz/Mode0/MSB](image/soft spi sendNoRecv 0x55 LSB Mode 0  delay=1 125Khz.png)
+
+  可以看到稳定输出 125 Khz频率波形。 由于延时函数的设计与HAL库的使用，上限频率有很大差距。为了提高频率，你可以在移植port时采用纯寄存器操作而非HAL库。后续的迭代中考虑继续优化波形与提高频率。
+
+------
+
 ## 📄附注
 
 1. 针对 `void Cus_SPI_TransferBlock(const spiBus_t *spiBus, const deviceNode_t *dev, uint8_t *tx, uint8_t *rx, uint32_t len)`

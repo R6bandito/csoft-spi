@@ -42,8 +42,8 @@ void Cus_SPI_BusInit( spiBus_t *bus )
   bus->select = __cus_spi_cs_write;
 
   /* 哨兵自环. */
-  bus->borderNode.next = &bus->borderNode;
-  bus->borderNode.prev = &bus->borderNode;
+  bus->borderNode.next = (deviceNode_t *)&bus->borderNode;
+  bus->borderNode.prev = (deviceNode_t *)&bus->borderNode;
 
   /* 当前索引指向哨兵. */
   bus->pxIndex = (deviceNode_t *)bus->borderNode.next;
@@ -58,7 +58,7 @@ void Cus_SPI_RegisterDevice( spiBus_t *bus, deviceNode_t *dev )
   deviceNode_t *tailNode = bus->borderNode.prev;
 
   /* 将设备插入到哨兵之前. */
-  dev->next = &bus->borderNode;
+  dev->next = (deviceNode_t *)&bus->borderNode;
   dev->prev = tailNode;
   tailNode->next = dev;
   bus->borderNode.prev = dev;  
@@ -82,6 +82,7 @@ void Cus_SPI_DeviceInit( deviceNode_t *dev, uint16_t devId, spiMode_t mode, bool
   dev->is_MSBFirst = msbFirst;
   dev->next = NULL;
   dev->prev = NULL;
+  dev->spiBus = NULL;
 }
 
 
